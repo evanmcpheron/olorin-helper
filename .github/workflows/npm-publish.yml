@@ -1,0 +1,40 @@
+name: Publish to NPM
+
+on:
+    push:
+        branches:
+            - main # Change this if your default branch is 'master'
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v3
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
+                  registry-url: 'https://registry.npmjs.org/'
+
+            - name: Install dependencies
+              run: npm install
+
+            - name: Auto-bump version
+              run: |
+                  git config --global user.name "github-actions[bot]"
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                  npm version patch -m "Bump version to %s [skip ci]"
+                  git push origin main --tags
+
+            - name: Build package
+              run: npm run build
+
+            - name: Publish to NPM
+              run: npm publish --access public
+              env:
+                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
